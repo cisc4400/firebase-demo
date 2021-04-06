@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "195419182935",
+    "project_id": "cisc4400-firebase-demo",
+    "storage_bucket": "cisc4400-firebase-demo.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:195419182935:android:456190b7b9452dc0af9012",
+        "android_client_info": {
+          "package_name": "edu.fordham.firebasedemo"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "195419182935-qtm23ol58ei9bcltou23ig295ln0efnp.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDx_Nr5a7G8D6n3TZKA4_4cspZQonuhgcI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "195419182935-qtm23ol58ei9bcltou23ig295ln0efnp.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
