@@ -1,7 +1,9 @@
 package edu.fordham.firebasedemo;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -23,24 +25,29 @@ import com.firebase.ui.auth.IdpResponse;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.firebase.ui.database.FirebaseRecyclerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
+    public static final String MESSAGES_CHILD = "messages";
+    public static final String USERS_CHILD = "users";
     private static final int RC_SIGN_IN = 123;
+    private static final int RC_IMAGE = 234;
     RecyclerView messageList;
     TextView nameTextView;
     EditText messageEditText;
-    DatabaseReference firebaseDatabase;
+    DatabaseReference firebaseDatabaseRef;
     FirebaseRecyclerAdapter<Message, MessageViewHolder> firebaseAdapter;
     FirebaseAuth firebaseAuth;
 
@@ -54,17 +61,17 @@ public class MainActivity extends AppCompatActivity {
         messageList = findViewById(R.id.messageList);
 
         // Initialize Realtime Database
-        firebaseDatabase = FirebaseDatabase.getInstance().getReference();
+        firebaseDatabaseRef = FirebaseDatabase.getInstance().getReference();
         FirebaseRecyclerOptions<Message> options =
                 new FirebaseRecyclerOptions.Builder<Message>()
-                        .setQuery(firebaseDatabase.child("messages"), Message.class)
+                        .setQuery(firebaseDatabaseRef.child(MESSAGES_CHILD), Message.class)
                         .build();
 
         firebaseAdapter = new FirebaseRecyclerAdapter<Message, MessageViewHolder>(options) {
             @Override
             public MessageViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
                 View view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.item_message, viewGroup, false);
-                return new MessageViewHolder(view, firebaseDatabase.child("users"));
+                return new MessageViewHolder(view, firebaseDatabaseRef.child(USERS_CHILD));
             }
 
             @Override
@@ -76,6 +83,14 @@ public class MainActivity extends AppCompatActivity {
         lm.setStackFromEnd(true);
         messageList.setLayoutManager(lm);
         messageList.setAdapter(firebaseAdapter);
+
+        firebaseAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+            @Override
+            public void onItemRangeInserted(int positionStart, int itemCount) {
+                super.onItemRangeInserted(positionStart, itemCount);
+                messageList.scrollToPosition(positionStart);
+            }
+        });
 
         firebaseAuth = FirebaseAuth.getInstance();
         FirebaseUser user = firebaseAuth.getCurrentUser();
@@ -124,10 +139,49 @@ public class MainActivity extends AppCompatActivity {
                 FirebaseUser user = firebaseAuth.getCurrentUser();
                 nameTextView.setText(user.getDisplayName());
                 if (response.isNewUser()) {
-                    firebaseDatabase.child("users").child(user.getUid()).setValue(user.getDisplayName());
+                    firebaseDatabaseRef.child(USERS_CHILD).child(user.getUid()).setValue(user.getDisplayName());
                 }
             } else {
                 Toast.makeText(this, "Sign in failed: " + response.getError(), Toast.LENGTH_LONG).show();
+            }
+        } else if (requestCode == RC_IMAGE) {
+            if (resultCode == RESULT_OK && data != null) {
+                final Uri uri = data.getData();
+                Log.d("mobdev", "Uri: " + uri.toString());
+
+                // Create a new message ID
+                String key = firebaseDatabaseRef.child(MESSAGES_CHILD).push().getKey();
+
+                // Build a StorageReference and then upload the file
+                final FirebaseUser user = firebaseAuth.getCurrentUser();
+                StorageReference storageReference =
+                        FirebaseStorage.getInstance()
+                                .getReference(user.getUid())
+                                .child(key)
+                                .child(uri.getLastPathSegment());
+
+                // Upload the image to Cloud Storage
+                storageReference.putFile(uri)
+                        .addOnSuccessListener(this, new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                            @Override
+                            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                                // After the image loads, get a public downloadUrl for the image
+                                // and add it to the message.
+                                taskSnapshot.getMetadata().getReference().getDownloadUrl()
+                                        .addOnSuccessListener(new OnSuccessListener<Uri>() {
+                                            @Override
+                                            public void onSuccess(Uri uri) {
+                                                Log.i("mobdev", "Update message " + key + ": " + uri);
+                                                final FirebaseUser user = firebaseAuth.getCurrentUser();
+                                                Message msg = new Message(
+                                                        null, user.getUid(), uri.toString());
+                                                firebaseDatabaseRef.child(MESSAGES_CHILD)
+                                                        .child(key)
+                                                        .setValue(msg);
+                                            }
+                                        });
+                            }
+                        });
             }
         }
     }
@@ -161,10 +215,16 @@ public class MainActivity extends AppCompatActivity {
     public void send(View view) {
         FirebaseUser user = firebaseAuth.getCurrentUser();
         Message message = new
-                Message(messageEditText.getText().toString(),
-                user.getUid(), user.getDisplayName());
+                Message(messageEditText.getText().toString().trim(),
+                user.getUid(),
+                null /* no image */);
 
-        firebaseDatabase.child("messages").push().setValue(message);
+        firebaseDatabaseRef.child(MESSAGES_CHILD).push().setValue(message);
         messageEditText.setText("");
+    }
+
+    public void addMessage(View view) {
+        Intent gallery = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI);
+        startActivityForResult(gallery, RC_IMAGE);
     }
 }

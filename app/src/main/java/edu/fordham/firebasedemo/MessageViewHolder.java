@@ -5,28 +5,27 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseReference;
+import com.squareup.picasso.Picasso;
 
 public class MessageViewHolder extends RecyclerView.ViewHolder {
 
-    private final DatabaseReference usersDatabase;
+    private final DatabaseReference usersDatabaseRef;
 
     TextView messageTextView;
     ImageView messageImageView;
     TextView messengerTextView;
 
-    public MessageViewHolder(View v, DatabaseReference usersDatabase) {
+    public MessageViewHolder(View v, DatabaseReference dbref) {
         super(v);
         messageTextView = itemView.findViewById(R.id.messageTextView);
         messageImageView = itemView.findViewById(R.id.messageImageView);
         messengerTextView = itemView.findViewById(R.id.messengerTextView);
-        this.usersDatabase = usersDatabase;
+        usersDatabaseRef = dbref;
     }
 
     public void bindMessage(Message message) {
@@ -34,14 +33,19 @@ public class MessageViewHolder extends RecyclerView.ViewHolder {
             messageTextView.setText(message.getText());
             messageTextView.setVisibility(TextView.VISIBLE);
             messageImageView.setVisibility(ImageView.GONE);
+        } else if (message.getImageUrl() != null) {
+            Picasso.get()
+                    .load(message.getImageUrl())
+                    .into(messageImageView);
+            messageImageView.setVisibility(ImageView.VISIBLE);
+            messageTextView.setVisibility(TextView.GONE);
         }
-        usersDatabase.child(message.getUid()).get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
+
+        usersDatabaseRef.child(message.getUid()).get().addOnSuccessListener(new OnSuccessListener<DataSnapshot>() {
             @Override
-            public void onComplete(@NonNull Task<DataSnapshot> task) {
-                if (task.isSuccessful()) {
-                    String name = (String) task.getResult().getValue();
-                    messengerTextView.setText(name);
-                }
+            public void onSuccess(DataSnapshot dataSnapshot) {
+                String name = (String) dataSnapshot.getValue();
+                messengerTextView.setText(name);
             }
         });
     }

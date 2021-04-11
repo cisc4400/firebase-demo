@@ -34,29 +34,39 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/nameTextView" />
 
-    <EditText
-        android:id="@+id/messageEditText"
-        android:layout_width="0dp"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="20dp"
-        android:layout_marginTop="30dp"
-        android:layout_marginEnd="5dp"
-        android:ems="10"
-        android:inputType="textShortMessage"
-        app:layout_constraintEnd_toStartOf="@+id/sendButton"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/messageList" />
-
-    <Button
-        android:id="@+id/sendButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="5dp"
-        android:layout_marginTop="30dp"
-        android:layout_marginEnd="20dp"
-        android:onClick="send"
-        android:text="Send"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/messageEditText"
-        app:layout_constraintTop_toBottomOf="@+id/messageList" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/messageList">
+
+        <ImageView
+            android:id="@+id/addMessageImageView"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:onClick="addMessage"
+            app:srcCompat="@android:drawable/ic_input_add" />
+
+        <EditText
+            android:id="@+id/messageEditText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_weight="1" />
+
+        <Button
+            android:id="@+id/sendButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:onClick="send"
+            android:text="Send" />
+
+    </LinearLayout>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -5,16 +5,18 @@ import java.util.Date;
 public class Message {
     private String mText;
     private String mUid;
-    private Date mTimestamp;
+    private String mImageUrl;
+    private long mTimestamp;
 
     // Needed for Firebase
     public Message() {
     }
 
-    public Message(String message, String uid, String username) {
+    public Message(String message, String uid, String image) {
         mText = message;
         mUid = uid;
-        mTimestamp = new Date();
+        mImageUrl = image;
+        mTimestamp = new Date().getTime();
     }
 
     public String getText() {
@@ -33,11 +35,19 @@ public class Message {
         mUid = id;
     }
 
-    public Date getTimestamp() {
+    public String getImageUrl() {
+        return mImageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        mImageUrl = imageUrl;
+    }
+
+    public long getTimestamp() {
         return mTimestamp;
     }
 
-    public void setTimestamp(Date timestamp) {
+    public void setTimestamp(long timestamp) {
         mTimestamp = timestamp;
     }
 }
